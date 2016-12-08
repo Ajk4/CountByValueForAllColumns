@@ -6,21 +6,21 @@ object DeepFunctions {
 
   object CountByValueForAllColumnsAggregator {
 
-    type CountByValue = Map[String, Long]
+    type CountByValue = Map[Any, Long]
     type DistributionByColumn = Array[CountByValue]
 
     def execute(dataFrame: DataFrame): DistributionByColumn = {
       dataFrame.rdd.aggregate(zero(dataFrame))(seq, comb).map(_.toMap)
     }
 
-    type Aggregator = Array[mutable.Map[String, Long]]
+    type Aggregator = Array[mutable.Map[Any, Long]]
 
     private def zero(dataFrame: DataFrame): Aggregator = {
-      val distibutionsPerColumns = new Array[mutable.Map[String, Long]](dataFrame.schema.fields.length)
+      val distibutionsPerColumns = new Array[mutable.Map[Any, Long]](dataFrame.schema.fields.length)
 
       var colIndex = 0
       while(colIndex < dataFrame.schema.fields.length) {
-        distibutionsPerColumns(colIndex) = mutable.Map.empty[String, Long]
+        distibutionsPerColumns(colIndex) = mutable.Map.empty[Any, Long]
         colIndex = colIndex + 1
       }
 
@@ -30,7 +30,7 @@ object DeepFunctions {
     private def seq(agg: Aggregator, row: Row): Aggregator = {
       var colIndex = 0
       while(colIndex < row.schema.fields.length) {
-        val value = row(colIndex).toString
+        val value = row(colIndex)
 
         val countByValueMap = agg(colIndex)
         val newCount = countByValueMap.get(value) match {

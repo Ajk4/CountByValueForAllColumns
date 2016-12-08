@@ -33,14 +33,14 @@ class CountByValueForAllColumnsTest extends FunSuite with Matchers {
         "C" -> 1
       ),
       Map(
-        "1" -> 5,
-        "2" -> 1,
-        "3" -> 1
+        1 -> 5,
+        2 -> 1,
+        3 -> 1
       ),
       Map(
-        "1.0" -> 5,
-        "2.0" -> 1,
-        "3.0" -> 1
+        1.0f -> 5,
+        2.0f -> 1,
+        3.0f -> 1
       )
     )
   }
