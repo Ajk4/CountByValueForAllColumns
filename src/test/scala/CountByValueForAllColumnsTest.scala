@@ -26,18 +26,18 @@ class CountByValueForAllColumnsTest extends FunSuite with Matchers {
     val countByValuesForColumns =
       DeepFunctions.CountByValueForAllColumnsAggregator.execute(dataFrame)
 
-    countByValuesForColumns shouldEqual Map(
-      "text" -> Map(
+    countByValuesForColumns shouldEqual Array(
+      Map(
         "A" -> 5,
         "B" -> 1,
         "C" -> 1
       ),
-      "number" -> Map(
+      Map(
         "1" -> 5,
         "2" -> 1,
         "3" -> 1
       ),
-      "anotherNumber" -> Map(
+      Map(
         "1.0" -> 5,
         "2.0" -> 1,
         "3.0" -> 1

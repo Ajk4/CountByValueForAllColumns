@@ -1,51 +1,53 @@
-import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.collection._
-import java.util.TreeSet
-
-import org.apache.spark.sql.{DataFrame, Row}
 
 object DeepFunctions {
 
   object CountByValueForAllColumnsAggregator {
 
     type CountByValue = Map[String, Long]
-    type DistributionByColumn = Map[String, CountByValue]
+    type DistributionByColumn = Array[CountByValue]
 
     def execute(dataFrame: DataFrame): DistributionByColumn = {
-      dataFrame.rdd.aggregate(zero(dataFrame))(seq, comb)
+      dataFrame.rdd.aggregate(zero(dataFrame))(seq, comb).map(_.toMap)
     }
 
-    type Aggregator = mutable.Map[String, mutable.Map[String, Long]]
+    type Aggregator = Array[mutable.Map[String, Long]]
 
     private def zero(dataFrame: DataFrame): Aggregator = {
-      val map = mutable.Map.empty[String, mutable.Map[String, Long]]
+      val distibutionsPerColumns = new Array[mutable.Map[String, Long]](dataFrame.schema.fields.length)
 
-      for(field <- dataFrame.schema.fields) {
-        map.put(field.name, mutable.Map.empty[String, Long])
+      var colIndex = 0
+      while(colIndex < dataFrame.schema.fields.length) {
+        distibutionsPerColumns(colIndex) = mutable.Map.empty[String, Long]
+        colIndex = colIndex + 1
       }
 
-      map
+      distibutionsPerColumns
     }
 
     private def seq(agg: Aggregator, row: Row): Aggregator = {
-      for(field <- row.schema.fields) {
-        val index = row.fieldIndex(field.name)
-        val value = row(index).toString
+      var colIndex = 0
+      while(colIndex < row.schema.fields.length) {
+        val value = row(colIndex).toString
 
-        val countByValueMap = agg(field.name)
+        val countByValueMap = agg(colIndex)
         val newCount = countByValueMap.get(value) match {
           case Some(count) => count + 1
           case None => 1
         }
         countByValueMap(value) = newCount
+        colIndex = colIndex + 1
       }
       agg
     }
 
     private def comb(left: Aggregator, right: Aggregator): Aggregator = {
-      for((columnName, leftCountByValue) <- left) {
-        val rightCountByValue = right(columnName)
+      var colIndex = 0
+      while(colIndex < left.length) {
+        val leftCountByValue = left(colIndex)
+        val rightCountByValue = right(colIndex)
         for ((value, rightCount) <- rightCountByValue) {
           val newCount = leftCountByValue.get(value) match {
             case Some(leftCount) => leftCount + rightCount
@@ -53,6 +55,7 @@ object DeepFunctions {
           }
           leftCountByValue(value) = newCount
         }
+        colIndex = colIndex + 1
       }
       left
     }
