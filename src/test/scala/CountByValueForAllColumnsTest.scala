@@ -2,16 +2,16 @@ import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.{FunSuite, Matchers}
 
-class CountByValueForAllColumnsTest extends FunSuite with Matchers {
 
-  case class TestRecord(text: String, number: Long, anotherNumber: Float)
+
+class CountByValueForAllColumnsTest extends FunSuite with Matchers {
 
   test("testCountByValueForAllColumns") {
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local[*]")
     val sc = new SparkContext(conf)
     val sqlContext = new SQLContext(sc)
 
-    val dataFrame = sqlContext.createDataFrame(Seq(
+    val data = Seq(
       TestRecord("A", 1, 1),
       TestRecord("B", 1, 1),
       TestRecord("A", 2, 1),
@@ -19,7 +19,9 @@ class CountByValueForAllColumnsTest extends FunSuite with Matchers {
       TestRecord("C", 1, 1),
       TestRecord("A", 3, 1),
       TestRecord("A", 1, 3)
-    ))
+    )
+    val dataRdd = sc.parallelize(data, 2)
+    val dataFrame = sqlContext.createDataFrame(dataRdd)
 
     val countByValuesForColumns =
       DeepFunctions.CountByValueForAllColumnsAggregator.execute(dataFrame)
